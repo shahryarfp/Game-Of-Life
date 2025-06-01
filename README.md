@@ -2,7 +2,7 @@
 
 A responsive, mobile-friendly implementation of Conway’s Game of Life using vanilla JavaScript, HTML, and CSS.
 
-![UI Screenshot](./sample.jpg)
+![UI Screenshot](./demo.jpg)
 
 ## Live Demo
 
