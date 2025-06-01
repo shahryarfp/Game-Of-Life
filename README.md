@@ -38,22 +38,9 @@ Time advances in discrete steps, called “generations.” At each generation, t
 
 3. **The Four Simple Rules**  
    At each generation, all cells update their state simultaneously according to these rules:
+   
 ![UI Screenshot](./rules.png)
-   - **Underpopulation**:  
-     Any live cell with fewer than two live neighbors dies (becomes a dead cell) in the next generation, because it is considered “underpopulated.”
-
-   - **Survival**:  
-     Any live cell with two or three live neighbors remains alive in the next generation.
-
-   - **Overpopulation**:  
-     Any live cell with more than three live neighbors dies (becomes a dead cell) in the next generation, because it is considered “overcrowded.”
-
-   - **Reproduction**:  
-     Any dead cell with exactly three live neighbors becomes a live cell in the next generation, as if by reproduction.
-
-   These rules are applied to every cell on the grid at the same time to produce the next generation.
-
-4. **Evolution Over Time**  
+5. **Evolution Over Time**  
    Because every cell’s fate depends on its neighbors, complex patterns can emerge: some patterns disappear quickly, some oscillate between a small set of configurations (oscillators), some travel across the grid (spaceships), and some even grow indefinitely. The Game of Life is famous for demonstrating how simple, local interactions can give rise to extremely rich, emergent behavior.
 
 ---
