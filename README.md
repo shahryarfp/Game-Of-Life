@@ -38,7 +38,7 @@ Time advances in discrete steps, called “generations.” At each generation, t
 
 3. **The Four Simple Rules**  
    At each generation, all cells update their state simultaneously according to these rules:
-
+![UI Screenshot](./rules.png)
    - **Underpopulation**:  
      Any live cell with fewer than two live neighbors dies (becomes a dead cell) in the next generation, because it is considered “underpopulated.”
 
