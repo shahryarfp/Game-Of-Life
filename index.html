@@ -25,24 +25,24 @@
       flex-direction: column;
       box-sizing: border-box;
       overflow: hidden;
-      position: relative; 
+      position: relative;  
     }
 
     #sidebar {
-      width: 100%; 
-      height: 200px; 
+      width: 100%;  
+      height: 200px;  
       background-color: #1e1e1e;
-      border-top: 2px solid #333; 
+      border-top: 2px solid #333;  
       display: flex;
-      flex-direction: column; 
+      flex-direction: column;  
       box-sizing: border-box;
-      transition: height 0.3s ease; 
-      flex-shrink: 0; 
+      transition: height 0.3s ease;  
+      flex-shrink: 0;  
       z-index: 100;
     }
 
     #sidebar.collapsed {
-      height: 45px; 
+      height: 45px;  
     }
 
     #toggleSidebarBtn {
@@ -52,7 +52,7 @@
       border: none;
       cursor: pointer;
       color: #fff;
-      padding: 8px 0; 
+      padding: 8px 0;  
       width: 100%;
       box-sizing: border-box;
       flex-shrink: 0;
@@ -66,8 +66,8 @@
     }
 
     #sidebar h2 {
-      margin: 5px 10px; 
-      font-size: 1rem; 
+      margin: 5px 10px;  
+      font-size: 1rem;  
       text-align: center;
       padding-bottom: 5px;
       flex-shrink: 0;
@@ -79,15 +79,15 @@
 
     #shapePalette {
       display: flex;
-      flex-direction: row; 
+      flex-direction: row;  
       gap: 15px;
       padding: 10px;
       box-sizing: border-box;
-      overflow-x: auto; 
+      overflow-x: auto;  
       overflow-y: hidden;
-      flex-grow: 1; 
+      flex-grow: 1;  
       -webkit-overflow-scrolling: touch;
-      align-items: center; 
+      align-items: center;  
     }
 
     #sidebar.collapsed #shapePalette {
@@ -99,7 +99,7 @@
       flex-direction: column;
       align-items: center;
       font-size: 0.8rem;
-      flex-shrink: 0; 
+      flex-shrink: 0;  
     }
 
     .shapeCanvas {
@@ -175,14 +175,14 @@
     }
 
     #canvasContainer {
-      flex-grow: 1; 
+      flex-grow: 1;  
       display: flex;
       justify-content: center;
       align-items: center;
       box-sizing: border-box;
-      position: relative; 
+      position: relative;  
       padding: 5px;
-      min-height: 0; 
+      min-height: 0;  
       overflow: hidden;
       touch-action: none;
     }
@@ -200,10 +200,10 @@
 
     @media (min-width: 768px) {
       #sidebar {
-        height: 220px; 
+        height: 220px;  
       }
       #sidebar.collapsed {
-        height: 45px; 
+        height: 45px;  
       }
       #sidebar h2 {
         font-size: 1.1rem;
@@ -249,7 +249,7 @@
         height: 60px;
       }
        #sidebar {
-        height: 180px; 
+        height: 180px;  
       }
     }
   </style>
@@ -277,24 +277,26 @@
   </div>
 
   <div id="sidebar">
-    <button id="toggleSidebarBtn">▼</button> 
+    <button id="toggleSidebarBtn">▼</button>  
     <h2>Shapes</h2>
     <div id="shapePalette">
-    </div>
+      </div>
   </div>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const rows = 80; 
+    // Grid dimensions (number of cells)
+    const rows = 80;  
     const cols = 80;
-    let cellSize;
+    let cellSize; // Size of each cell in pixels, will be calculated
     let grid = createEmptyGrid();
     let running = false;
     let timeoutId = null;
-    let speed = 10;
-    let initialGrid = createEmptyGrid();
+    let speed = 10; // Default speed (updates per second)
+    let initialGrid = createEmptyGrid(); // Stores the grid state before starting or after manual edits
 
+    // DOM Elements
     const startStopBtn = document.getElementById('startStopBtn');
     const resetBtn = document.getElementById('resetBtn');
     const randomBtn = document.getElementById('randomBtn');
@@ -305,58 +307,92 @@
     const sidebar = document.getElementById('sidebar');
     const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
 
-    let viewOffsetX = 0;
+    // Panning and Zooming variables
+    let viewOffsetX = 0; // Top-left corner of the viewport in grid coordinates
     let viewOffsetY = 0;
     let isPanning = false;
     let lastPanX, lastPanY;
 
-    const MIN_CELL_SIZE_DESKTOP = 2;
-    const MIN_CELL_SIZE_MOBILE = 4;
+    const MIN_CELL_SIZE_DESKTOP = 2; // Minimum cell size for desktop
+    const MIN_CELL_SIZE_MOBILE = 4;  // Minimum cell size for mobile (larger for touch)
     let currentMinCellSize = window.innerWidth < 768 ? MIN_CELL_SIZE_MOBILE : MIN_CELL_SIZE_DESKTOP;
-    const MAX_CELL_SIZE = 100;
-    let initialCellSizeSetup = true;
+    const MAX_CELL_SIZE = 100; // Maximum cell size
+    let initialCellSizeSetup = true; // Flag to set initial zoom and pan
 
-    let pinchStartDistance = null;
+    let pinchStartDistance = null; // For pinch-to-zoom
 
     // Variables for tap detection
     let touchStartX, touchStartY, touchStartTime;
     const TAP_THRESHOLD = 10; // Max distance in pixels for a touch to be considered a tap
-    const TAP_DURATION_THRESHOLD = 250; // Max duration in ms for a touch to be considered a tap (increased slightly)
+    const TAP_DURATION_THRESHOLD = 250; // Max duration in ms for a touch to be considered a tap
 
 
+    // --- Shape Definitions ---
+    // Each shape is an array of [row, col] offsets from the top-left of the pattern.
     const shapes = {
       Glider: [[0,1],[1,2],[2,0],[2,1],[2,2]],
-      Blinker: [[0,0],[0,1],[0,2]],
-      Toad: [[0,1],[0,2],[0,3],[1,0],[1,1],[1,2]],
-      Beacon: [[0,0],[0,1],[1,0],[1,1],[2,2],[2,3],[3,2],[3,3]],
-      Block: [[0,0],[0,1],[1,0],[1,1]],
-      Beehive: [[0,1],[0,2],[1,0],[1,3],[2,1],[2,2]],
-      Loaf: [[0,1],[0,2],[1,0],[1,3],[2,1],[2,4],[3,2],[3,3]],
-      Boat: [[0,0],[0,1],[1,0],[1,2],[2,1]],
-      Tub: [[0,1],[1,0],[1,2],[2,1]],
-      Rpento: [[0,1],[0,2],[1,0],[1,1],[2,1]],
-      Diehard: [[0,6],[1,0],[1,1],[2,1],[2,5],[2,6],[2,7]],
-      Acorn: [[0,1],[1,3],[2,0],[2,1],[2,4],[2,5],[2,6]]
+      Blinker: [[0,0],[0,1],[0,2]], // Oscillator (period 2)
+      Toad: [[0,1],[0,2],[0,3],[1,0],[1,1],[1,2]], // Oscillator (period 2)
+      Beacon: [[0,0],[0,1],[1,0],[1,1],[2,2],[2,3],[3,2],[3,3]], // Oscillator (period 2)
+      Block: [[0,0],[0,1],[1,0],[1,1]], // Still life
+      Beehive: [[0,1],[0,2],[1,0],[1,3],[2,1],[2,2]], // Still life
+      Loaf: [[0,1],[0,2],[1,0],[1,3],[2,1],[2,4],[3,2],[3,3]], // Still life
+      Boat: [[0,0],[0,1],[1,0],[1,2],[2,1]], // Still life
+      Tub: [[0,1],[1,0],[1,2],[2,1]], // Still life
+      Rpento: [[0,1],[0,2],[1,0],[1,1],[2,1]], // Methuselah (stabilizes after 1103 generations)
+      Diehard: [[0,6],[1,0],[1,1],[2,1],[2,5],[2,6],[2,7]], // Methuselah (dies after 130 generations)
+      Acorn: [[0,1],[1,3],[2,0],[2,1],[2,4],[2,5],[2,6]], // Methuselah (stabilizes after 5206 generations)
+      // --- NEW SHAPES ADDED BELOW ---
+      LWSS: [[0,0],[0,3], [1,0],[1,4], [2,0],[2,1],[2,2],[2,3],[2,4], [3,1],[3,3]], // Lightweight Spaceship
+      Pulsar: [ // Oscillator (period 3)
+        [0,2],[0,3],[0,4], [0,8],[0,9],[0,10],
+        [2,0],[2,5],[2,7],[2,12], [3,0],[3,5],[3,7],[3,12], [4,0],[4,5],[4,7],[4,12],
+        [5,2],[5,3],[5,4], [5,8],[5,9],[5,10],
+        // row 6 is empty
+        [7,2],[7,3],[7,4], [7,8],[7,9],[7,10],
+        [8,0],[8,5],[8,7],[8,12], [9,0],[9,5],[9,7],[9,12], [10,0],[10,5],[10,7],[10,12],
+        // row 11 is empty
+        [12,2],[12,3],[12,4], [12,8],[12,9],[12,10]
+      ],
+      Pentadecathlon: [ // Oscillator (period 15)
+        [0,2],[0,7],
+        [1,0],[1,1],[1,3],[1,4],[1,5],[1,6],[1,8],[1,9],
+        [2,2],[2,7]
+      ],
+      GosperGun: [ // Gosper Glider Gun (produces gliders)
+        [0,24],[1,22],[1,24],[2,12],[2,13],[2,20],[2,21],[2,34],[2,35],
+        [3,11],[3,15],[3,20],[3,21],[3,34],[3,35],
+        [4,0],[4,1],[4,10],[4,16],[4,20],[4,21],
+        [5,0],[5,1],[5,10],[5,14],[5,16],[5,17],[5,22],[5,24],
+        [6,10],[6,16],[6,24],[7,11],[7,15],[8,12],[8,13]
+      ],
+      Pond: [[0,1],[0,2],[1,0],[1,3],[2,0],[2,3],[3,1],[3,2]] // Still life
     };
-    const previewSize = 70;
+    const previewSize = 70; // Size of the preview canvas for shapes
 
+    // --- Shape Palette Creation ---
     function createShapePreviews() {
       shapePalette.innerHTML = ''; // Clear existing previews
       for (let [name, pattern] of Object.entries(shapes)) {
         const container = document.createElement('div');
         container.classList.add('shape-container');
+        
         const label = document.createElement('div');
         label.textContent = name;
         label.style.marginBottom = '5px';
-        const shapeCanvasEl = document.createElement('canvas'); // Renamed to avoid conflict with global 'canvas'
+
+        const shapeCanvasEl = document.createElement('canvas'); 
         shapeCanvasEl.width = previewSize;
         shapeCanvasEl.height = previewSize;
         shapeCanvasEl.classList.add('shapeCanvas');
-        shapeCanvasEl.draggable = true;
-        shapeCanvasEl.dataset.shape = name;
+        shapeCanvasEl.draggable = true; // Make the canvas draggable
+        shapeCanvasEl.dataset.shape = name; // Store shape name for drag data
+
         const sCtx = shapeCanvasEl.getContext('2d');
-        sCtx.fillStyle = '#161616';
+        sCtx.fillStyle = '#161616'; // Background for preview
         sCtx.fillRect(0, 0, previewSize, previewSize);
+
+        // Determine dimensions of the pattern to scale it correctly
         let maxRow = 0, maxCol = 0;
         pattern.forEach(([r, c]) => {
           if (r > maxRow) maxRow = r;
@@ -364,86 +400,114 @@
         });
         const rowsUsed = maxRow + 1;
         const colsUsed = maxCol + 1;
+
+        // Calculate cell size for preview, ensuring it's at least 1px
         const previewCellSize = Math.max(1, Math.floor(previewSize / Math.max(rowsUsed, colsUsed, 1)));
+        
+        // Center the pattern in the preview canvas
         const offsetX = (previewSize - colsUsed * previewCellSize) / 2;
         const offsetY = (previewSize - rowsUsed * previewCellSize) / 2;
-        sCtx.fillStyle = '#00FFFF';
+
+        sCtx.fillStyle = '#00FFFF'; // Color of live cells in preview
         pattern.forEach(([r, c]) => {
+          // Draw slightly smaller cells to show grid lines if cell size is large enough
           sCtx.fillRect(offsetX + c * previewCellSize, offsetY + r * previewCellSize, previewCellSize -0.5, previewCellSize -0.5);
         });
+
+        // Optionally draw grid lines in preview if cells are large enough
         sCtx.strokeStyle = '#333';
         sCtx.lineWidth = 0.5;
-        if (previewCellSize > 3) {
+        if (previewCellSize > 3) { // Only draw grid if cells are reasonably visible
           for (let i = 0; i < rowsUsed; i++) {
             for (let j = 0; j < colsUsed; j++) {
               sCtx.strokeRect(offsetX + j * previewCellSize, offsetY + i * previewCellSize, previewCellSize, previewCellSize);
             }
           }
         }
+        
+        // Event listener for dragging shapes
         shapeCanvasEl.addEventListener('dragstart', (event) => {
           event.dataTransfer.setData('text/plain', name);
+          // You can also set a drag image if desired:
+          // event.dataTransfer.setDragImage(shapeCanvasEl, previewSize / 2, previewSize / 2);
         });
+
         container.appendChild(label);
         container.appendChild(shapeCanvasEl);
         shapePalette.appendChild(container);
       }
     }
 
+    // --- Canvas Sizing and Drawing ---
     function resizeCanvas() {
       currentMinCellSize = window.innerWidth < 768 ? MIN_CELL_SIZE_MOBILE : MIN_CELL_SIZE_DESKTOP;
+      // Ensure canvasContainer has dimensions before proceeding
       if (!canvasContainer.clientWidth || !canvasContainer.clientHeight) {
-        requestAnimationFrame(resizeCanvas);
+        requestAnimationFrame(resizeCanvas); // Try again on next frame
         return;
       }
+
       const containerWidth = canvasContainer.clientWidth;
       const containerHeight = canvasContainer.clientHeight;
       if (containerWidth <= 0 || containerHeight <= 0) return;
 
+
+      // Store old canvas center in grid coordinates to maintain view
       const oldCanvasWidth = canvas.width;
       const oldCanvasHeight = canvas.height;
       let centerXGrid = viewOffsetX + (oldCanvasWidth / 2 / (cellSize || currentMinCellSize));
       let centerYGrid = viewOffsetY + (oldCanvasHeight / 2 / (cellSize || currentMinCellSize));
 
+
       canvas.width = containerWidth;
       canvas.height = containerHeight;
-      ctx.imageSmoothingEnabled = false;
+      ctx.imageSmoothingEnabled = false; // Keep pixels sharp
 
       if (initialCellSizeSetup) {
+        // Calculate initial cell size to fit the grid (or a portion of it)
         let initialFitCellSize = Math.floor(Math.min(containerWidth / cols, containerHeight / rows));
+        // For mobile, show a smaller portion of the grid initially (more zoomed in)
         if (window.innerWidth < 768) {
-            initialFitCellSize = Math.floor(Math.min(containerWidth / (cols/1.5), containerHeight / (rows/1.5)));
+             initialFitCellSize = Math.floor(Math.min(containerWidth / (cols/1.5), containerHeight / (rows/1.5)));
         }
         cellSize = Math.max(currentMinCellSize, initialFitCellSize);
+        
+        // Center the initial view
         viewOffsetX = (cols - containerWidth / cellSize) / 2;
         viewOffsetY = (rows - containerHeight / cellSize) / 2;
         initialCellSizeSetup = false;
       } else {
-        if (cellSize > 0) {
-          viewOffsetX = centerXGrid - (canvas.width / 2 / cellSize);
-          viewOffsetY = centerYGrid - (canvas.height / 2 / cellSize);
-        } else {
-          cellSize = currentMinCellSize;
-          viewOffsetX = (cols - containerWidth / cellSize) / 2;
-          viewOffsetY = (rows - containerHeight / cellSize) / 2;
+         // Recalculate viewOffset to keep the same center point after resize/zoom
+        if (cellSize > 0) { // cellSize should always be positive
+            viewOffsetX = centerXGrid - (canvas.width / 2 / cellSize);
+            viewOffsetY = centerYGrid - (canvas.height / 2 / cellSize);
+        } else { // Fallback, should not happen if cellSize is managed correctly
+            cellSize = currentMinCellSize;
+            viewOffsetX = (cols - containerWidth / cellSize) / 2;
+            viewOffsetY = (rows - containerHeight / cellSize) / 2;
         }
       }
       clampViewOffset();
       drawGrid();
     }
-
+    
+    // Ensure viewOffset stays within grid boundaries
     function clampViewOffset() {
-      if (typeof cellSize === 'undefined' || cellSize <= 0) return;
-      if (!canvas.width || !canvas.height) return;
+      if (typeof cellSize === 'undefined' || cellSize <= 0) return; // Guard against undefined/invalid cellSize
+      if (!canvas.width || !canvas.height) return; // Guard against zero canvas dimensions
 
+      // If grid is smaller than canvas, center it
       if (cols * cellSize < canvas.width) {
-        viewOffsetX = (cols * cellSize - canvas.width) / (2 * cellSize);
+        viewOffsetX = (cols * cellSize - canvas.width) / (2 * cellSize); // Negative offset to center
       } else {
+        // Otherwise, clamp to boundaries
         const minX = 0;
         const maxX = Math.max(0, cols - (canvas.width / cellSize));
         viewOffsetX = Math.max(minX, Math.min(viewOffsetX, maxX));
       }
+
       if (rows * cellSize < canvas.height) {
-        viewOffsetY = (rows * cellSize - canvas.height) / (2 * cellSize);
+        viewOffsetY = (rows * cellSize - canvas.height) / (2 * cellSize); // Negative offset to center
       } else {
         const minY = 0;
         const maxY = Math.max(0, rows - (canvas.height / cellSize));
@@ -452,39 +516,55 @@
     }
 
     window.addEventListener('resize', resizeCanvas);
-    setTimeout(resizeCanvas, 100);
+    // Initial call to resize and draw, slight delay to ensure layout is stable
+    setTimeout(resizeCanvas, 100); 
 
+    // --- Sidebar Toggle ---
     toggleSidebarBtn.addEventListener('click', () => {
       sidebar.classList.toggle('collapsed');
       toggleSidebarBtn.textContent = sidebar.classList.contains('collapsed') ? '▲' : '▼';
-      setTimeout(resizeCanvas, 310); 
+      // Recalculate canvas size after sidebar animation
+      setTimeout(resizeCanvas, 310); // Delay should match sidebar transition time
     });
 
+    // --- Initialize Shape Previews ---
     createShapePreviews();
 
+
+    // --- Zooming Logic ---
     function applyZoom(zoomFactor, mouseX, mouseY) {
         if (typeof cellSize === 'undefined') return;
+        // Calculate mouse position in grid coordinates before zoom
         const mouseGridX_before = (mouseX / cellSize) + viewOffsetX;
         const mouseGridY_before = (mouseY / cellSize) + viewOffsetY;
+
         let newCellSize = cellSize * zoomFactor;
         newCellSize = Math.max(currentMinCellSize, Math.min(MAX_CELL_SIZE, newCellSize));
-        if (newCellSize === cellSize) return;
+
+        if (newCellSize === cellSize) return; // No change in zoom
+
         cellSize = newCellSize;
+
+        // Adjust viewOffset to keep the point under the mouse stationary
         viewOffsetX = mouseGridX_before - (mouseX / cellSize);
         viewOffsetY = mouseGridY_before - (mouseY / cellSize);
+
         clampViewOffset();
         drawGrid();
     }
-
+    
+    // Mouse wheel zoom
     canvas.addEventListener('wheel', (event) => {
-      event.preventDefault();
+      event.preventDefault(); // Prevent page scrolling
       const rect = canvas.getBoundingClientRect();
       const mouseX = event.clientX - rect.left;
       const mouseY = event.clientY - rect.top;
-      const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9;
+      const zoomFactor = event.deltaY < 0 ? 1.1 : 0.9; // Zoom in or out
       applyZoom(zoomFactor, mouseX, mouseY);
     }, { passive: false });
 
+
+    // --- Panning Logic ---
     function startPan(clientX, clientY) {
         isPanning = true;
         lastPanX = clientX;
@@ -496,10 +576,13 @@
         if (!isPanning || typeof cellSize === 'undefined' || cellSize <= 0) return;
         const dx = clientX - lastPanX;
         const dy = clientY - lastPanY;
+
         viewOffsetX -= dx / cellSize;
         viewOffsetY -= dy / cellSize;
+
         lastPanX = clientX;
         lastPanY = clientY;
+
         clampViewOffset();
         drawGrid();
     }
@@ -507,32 +590,30 @@
     function stopPan() {
         if (isPanning) {
             isPanning = false;
-            canvas.style.cursor = running ? 'grab' : 'crosshair';
+            canvas.style.cursor = running ? 'grab' : 'crosshair'; // Revert cursor based on game state
         }
-        pinchStartDistance = null; 
+        pinchStartDistance = null; // Reset for pinch zoom
     }
 
     // --- Mouse Panning ---
     canvas.addEventListener('mousedown', (event) => {
-      if (event.button !== 0) return; 
-      if (event.target !== canvas) return;
-      // Do not start pan if a shape is being dragged from palette
+      if (event.button !== 0) return; // Only pan with left mouse button
+      if (event.target !== canvas) return; // Ensure click is on canvas itself
+      // Do not start pan if a shape is being dragged from palette (already handled by draggable)
       if (event.target.classList.contains('shapeCanvas')) return;
       startPan(event.clientX, event.clientY);
     });
     canvas.addEventListener('mousemove', (event) => {
       movePan(event.clientX, event.clientY);
     });
-    window.addEventListener('mouseup', stopPan); 
-    canvas.addEventListener('mouseleave', stopPan);
+    window.addEventListener('mouseup', stopPan); // Stop panning if mouse is released anywhere
+    canvas.addEventListener('mouseleave', stopPan); // Stop panning if mouse leaves canvas
 
 
     // --- Touch Panning, Pinch Zoom, and Tap ---
     canvas.addEventListener('touchstart', (event) => {
-        // event.preventDefault(); // Already have touch-action: none on container, might not be needed here or could interfere with drop.
-                               // Let's test without it first for canvas specific interactions.
-                               // If issues with page scroll, add it back.
-                               // For tap, preventDefault will be called if tap is handled.
+        // Using touch-action: none on canvasContainer, so preventDefault might not be strictly needed here for panning/zooming.
+        // However, it's good for tap to prevent emulated mouse events.
         if (event.touches.length === 1) {
             const touch = event.touches[0];
             touchStartX = touch.clientX;
@@ -557,13 +638,16 @@
             const dy = event.touches[0].clientY - event.touches[1].clientY;
             const currentDistance = Math.sqrt(dx * dx + dy * dy);
             const zoomFactor = currentDistance / pinchStartDistance;
+
             const rect = canvas.getBoundingClientRect();
+            // Use midpoint of touches for zoom center
             const MclientX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
             const MclientY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
             const mouseX = MclientX - rect.left;
             const mouseY = MclientY - rect.top;
+
             applyZoom(zoomFactor, mouseX, mouseY);
-            pinchStartDistance = currentDistance; 
+            pinchStartDistance = currentDistance; // Update for next move
         }
     }, { passive: false });
 
@@ -571,6 +655,7 @@
         let wasTapHandled = false;
 
         // Check for tap on single touch end
+        // (event.changedTouches gives the touches that were just removed)
         if (event.changedTouches.length === 1 && touchStartX !== undefined && touchStartTime !== undefined) {
             const touch = event.changedTouches[0];
             const deltaX = touch.clientX - touchStartX;
@@ -603,12 +688,12 @@
         }
 
         // General cleanup for pan and pinch
-        if (event.touches.length < 2) {
+        if (event.touches.length < 2) { // If less than 2 touches remain
             pinchStartDistance = null;
         }
         if (event.touches.length < 1) { // All fingers are up
             if (!wasTapHandled) {
-                // If it wasn't a tap, and panning might have occurred
+                // If it wasn't a tap, and panning might have occurred, ensure pan stops
                 stopPan();
             }
             // Reset touch start variables for the next interaction
@@ -619,7 +704,7 @@
     });
 
 
-    // --- Click Handler (Mainly for Desktop, Fallback for Mobile) ---
+    // --- Click Handler (Mainly for Desktop, Fallback for Mobile if tap not handled) ---
     canvas.addEventListener('click', (event) => {
       // If running, or cellSize is undefined, or isPanning is true, return.
       // isPanning check is important to prevent click after a drag.
@@ -649,7 +734,7 @@
           }
           drawGrid();
         }
-      }, 50); // Small delay
+      }, 50); // Small delay to allow tap handling to potentially suppress this
     });
 
     // --- Drag and Drop for Shapes ---
@@ -659,20 +744,25 @@
 
     canvas.addEventListener('drop', (event) => {
       event.preventDefault();
-      if (typeof cellSize === 'undefined') return;
+      if (typeof cellSize === 'undefined') return; // Ensure cellSize is defined
+
       const shapeName = event.dataTransfer.getData('text/plain');
-      if (!shapeName || !shapes[shapeName]) return;
+      if (!shapeName || !shapes[shapeName]) return; // Invalid shape
+
       const rect = canvas.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
+
+      // Calculate grid cell where the shape's top-left corner will be placed
       const baseCol = Math.floor(x / cellSize + viewOffsetX);
       const baseRow = Math.floor(y / cellSize + viewOffsetY);
+
       const pattern = shapes[shapeName];
       pattern.forEach(([r, c]) => {
         const row = baseRow + r;
         const col = baseCol + c;
         if (row >= 0 && row < rows && col >= 0 && col < cols) {
-          grid[row][col] = 1;
+          grid[row][col] = 1; // Set cell to alive
           if (!running) { // Update initialGrid if game not running
             initialGrid[row][col] = 1;
           }
@@ -715,7 +805,7 @@
         if (timeoutId) clearTimeout(timeoutId);
       }
       grid = Array.from({ length: rows }, () =>
-        Array.from({ length: cols }, () => (Math.random() < 0.3 ? 1 : 0))
+        Array.from({ length: cols }, () => (Math.random() < 0.3 ? 1 : 0)) // Adjust density here
       );
       initialGrid = grid.map(rowArray => rowArray.slice()); // New random state becomes initial
       drawGrid();
@@ -744,16 +834,21 @@
     }
 
     function drawGrid() {
+      // Ensure context and dimensions are valid before drawing
       if (!ctx || !canvas.width || !canvas.height || typeof cellSize === 'undefined' || cellSize <= 0) {
+        // console.warn("DrawGrid called with invalid state", {ctx, canvasW: canvas.width, canvasH: canvas.height, cellSize});
         return;
       }
-      ctx.imageSmoothingEnabled = false;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#00FFFF';
-      ctx.strokeStyle = '#333';
-      ctx.lineWidth = Math.max(0.1, Math.min(1, cellSize / 10));
+      ctx.imageSmoothingEnabled = false; // For crisp pixels
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+      
+      ctx.fillStyle = '#00FFFF'; // Color of live cells
+      ctx.strokeStyle = '#333'; // Color of grid lines
+      // Adjust line width based on cell size for visibility, but keep it thin
+      ctx.lineWidth = Math.max(0.1, Math.min(1, cellSize / 10)); 
 
-      const buffer = 1;
+      // Calculate visible portion of the grid to optimize drawing
+      const buffer = 1; // Draw a bit outside the viewport to avoid edge artifacts during panning
       const startCol = Math.floor(viewOffsetX - buffer);
       const endCol = Math.ceil(viewOffsetX + canvas.width / cellSize + buffer);
       const startRow = Math.floor(viewOffsetY - buffer);
@@ -761,17 +856,22 @@
 
       for (let r = startRow; r < endRow; r++) {
         for (let c = startCol; c < endCol; c++) {
+          // Skip cells outside the actual grid boundaries
           if (r < 0 || r >= rows || c < 0 || c >= cols) continue;
+
           const screenX = (c - viewOffsetX) * cellSize;
           const screenY = (r - viewOffsetY) * cellSize;
-          if (grid[r][c]) {
-            if (cellSize < 3) {
+
+          if (grid[r][c]) { // If cell is alive
+            // For very small cells, drawing a slightly smaller fill can look better than also drawing a border
+            if (cellSize < 3) { 
                 ctx.fillRect(screenX + ctx.lineWidth, screenY + ctx.lineWidth, cellSize - (ctx.lineWidth*2), cellSize - (ctx.lineWidth*2));
             } else {
                 ctx.fillRect(screenX, screenY, cellSize, cellSize);
             }
           }
-          if (cellSize > 3) {
+          // Draw grid lines if cells are large enough to see them
+          if (cellSize > 3) { 
             ctx.strokeRect(screenX, screenY, cellSize, cellSize);
           }
         }
@@ -783,9 +883,9 @@
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
           const neighbors = countNeighbors(row, col);
-          if (grid[row][col]) {
+          if (grid[row][col]) { // Cell is alive
             nextGrid[row][col] = (neighbors === 2 || neighbors === 3) ? 1 : 0;
-          } else {
+          } else { // Cell is dead
             nextGrid[row][col] = (neighbors === 3) ? 1 : 0;
           }
         }
@@ -797,11 +897,13 @@
       let count = 0;
       for (let i = -1; i <= 1; i++) {
         for (let j = -1; j <= 1; j++) {
-          if (i === 0 && j === 0) continue;
+          if (i === 0 && j === 0) continue; // Skip the cell itself
+          // Modulo for toroidal array (wrapping edges)
           const nRow = (row + i + rows) % rows;
           const nCol = (col + j + cols) % cols;
+          // Check if neighbor exists and is alive
           if (grid[nRow] && typeof grid[nRow][nCol] !== 'undefined') {
-            count += grid[nRow][nCol];
+             count += grid[nRow][nCol];
           }
         }
       }
@@ -812,9 +914,10 @@
       if (!running) return;
       grid = getNextGrid();
       drawGrid();
+      // Use requestAnimationFrame for smoother animations synced with display refresh
       timeoutId = setTimeout(() => {
         requestAnimationFrame(runGame);
-      }, 1000 / speed);
+      }, 1000 / speed); // Adjust speed via timeout
     }
   </script>
 </body>
