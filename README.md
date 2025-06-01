@@ -6,7 +6,9 @@ A responsive, mobile-friendly implementation of Conway’s Game of Life using va
 
 ## Live Demo
 
-[Try it online](https://shahryarfp.github.io/Game-Of-Life/)
+Experience the Game of Life directly in your browser by visiting the [live demo](https://shahryarfp.github.io/Game-Of-Life/).
+For optimal compatibility and to avoid rendering issues, we recommend using Google Chrome.
+
 
 ## Features
 
