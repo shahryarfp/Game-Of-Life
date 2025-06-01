@@ -39,7 +39,9 @@ Time advances in discrete steps, called “generations.” At each generation, t
 3. **The Four Simple Rules**  
    At each generation, all cells update their state simultaneously according to these rules:
    
-<img src="./rules.png" alt="UI Screenshot" width="500" />
+<p align="center">
+  <img src="./rules.png" alt="UI Screenshot" width="600" />
+</p>
 
 5. **Evolution Over Time**  
    Because every cell’s fate depends on its neighbors, complex patterns can emerge: some patterns disappear quickly, some oscillate between a small set of configurations (oscillators), some travel across the grid (spaceships), and some even grow indefinitely. The Game of Life is famous for demonstrating how simple, local interactions can give rise to extremely rich, emergent behavior.
