@@ -66,12 +66,3 @@ Time advances in discrete steps, called “generations.” At each generation, t
 - **Guns and Puffers**: Larger constructions that periodically emit smaller moving patterns (e.g., Gosper Glider Gun).
 
 Feel free to experiment by placing one of the predefined shapes or drawing your own custom configuration. Watch how it evolves and interacts with other cells as generations progress!
-
----
-
-## Getting Started
-
-1. **Clone or Download**  
-   ```bash
-   git clone https://github.com/shahryarfp/Game-Of-Life.git
-   cd Game-Of-Life
