@@ -40,16 +40,10 @@ Time advances in discrete steps, called “generations.” At each generation, t
    At each generation, all cells update their state simultaneously according to these rules:
    
 ![UI Screenshot](./rules.png)
+
 5. **Evolution Over Time**  
    Because every cell’s fate depends on its neighbors, complex patterns can emerge: some patterns disappear quickly, some oscillate between a small set of configurations (oscillators), some travel across the grid (spaceships), and some even grow indefinitely. The Game of Life is famous for demonstrating how simple, local interactions can give rise to extremely rich, emergent behavior.
 
 ---
-
-## Simple Examples of Patterns
-
-- **Still Lifes**: Patterns that do not change from one generation to the next (e.g., Block, Beehive).
-- **Oscillators**: Patterns that return to their initial state after a fixed number of generations (e.g., Blinker, Toad).
-- **Spaceships**: Patterns that move across the grid over successive generations (e.g., Glider, Lightweight Spaceship).
-- **Guns and Puffers**: Larger constructions that periodically emit smaller moving patterns (e.g., Gosper Glider Gun).
 
 Feel free to experiment by placing one of the predefined shapes or drawing your own custom configuration. Watch how it evolves and interacts with other cells as generations progress!
